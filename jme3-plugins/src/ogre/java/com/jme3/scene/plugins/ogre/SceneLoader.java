@@ -526,6 +526,9 @@ public class SceneLoader extends DefaultHandler implements AssetLoader {
             // checking with JmeSystem.
             SAXParserFactory factory = SAXParserFactory.newInstance();
             factory.setNamespaceAware(true);
+            // Disable external entities to prevent XXE attacks
+            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
             XMLReader xr = factory.newSAXParser().getXMLReader();
 
             xr.setContentHandler(this);
