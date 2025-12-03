@@ -298,10 +298,59 @@ public abstract class Serializer {
                 assert !file.getName().contains(".");
                 classes.addAll(findClasses(file, pkgName + "." + file.getName()));
             } else if (file.getName().endsWith(".class")) {
-                classes.add(Class.forName(pkgName + '.' + file.getName().substring(0, file.getName().length() - 6)));
+                String className = file.getName().substring(0, file.getName().length() - 6);
+                String fullClassName = pkgName + '.' + className;
+                
+                // Validate class name to prevent unsafe reflection
+                if (isValidClassName(fullClassName)) {
+                    classes.add(Class.forName(fullClassName));
+                }
             }
         }
         return classes;
+    }
+    
+    /**
+     * Validates that a class name is safe to load via reflection.
+     * Prevents loading of system classes that could be used for malicious purposes.
+     */
+    private static boolean isValidClassName(String className) {
+        if (className == null || className.isEmpty()) {
+            return false;
+        }
+        
+        // Block dangerous system packages that could be exploited
+        String[] blockedPrefixes = {
+            "java.lang.Runtime",
+            "java.lang.Process",
+            "java.lang.System",
+            "java.security.",
+            "java.io.File",
+            "java.nio.file.",
+            "javax.script.",
+            "sun.",
+            "com.sun.",
+            "jdk.internal."
+        };
+        
+        for (String prefix : blockedPrefixes) {
+            if (className.startsWith(prefix)) {
+                return false;
+            }
+        }
+        
+        // Only allow alphanumeric characters, dots, underscores, and dollar signs
+        // This prevents directory traversal and other injection attacks
+        if (!className.matches("^[a-zA-Z0-9._$]+$")) {
+            return false;
+        }
+        
+        // Prevent directory traversal patterns
+        if (className.contains("..") || className.contains("//")) {
+            return false;
+        }
+        
+        return true;
     }
 
     public static SerializerRegistration registerClass(Class cls, Serializer serializer) {
