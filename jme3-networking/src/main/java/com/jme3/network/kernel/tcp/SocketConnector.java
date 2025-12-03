@@ -39,6 +39,8 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -62,7 +64,8 @@ public class SocketConnector implements Connector
 
     public SocketConnector( InetAddress address, int port ) throws IOException
     {
-        this.sock = new Socket(address, port);
+        SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+        this.sock = (SSLSocket) factory.createSocket(address, port);
         remoteAddress = sock.getRemoteSocketAddress(); // for info purposes 
         
         // Disable Nagle's buffering so data goes out when we
