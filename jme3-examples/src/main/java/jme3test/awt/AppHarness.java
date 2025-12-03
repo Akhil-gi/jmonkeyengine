@@ -44,6 +44,8 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashSet;
+import java.util.Set;
 import javax.swing.SwingUtilities;
 
 /**
@@ -58,6 +60,16 @@ public class AppHarness extends Applet {
 
     private String appClass;
     private URL appCfg = null;
+    
+    // Whitelist of allowed application classes to prevent unsafe reflection
+    private static final Set<String> ALLOWED_APP_CLASSES = new HashSet<>();
+    static {
+        // Add legitimate JME test application classes that can be safely instantiated
+        ALLOWED_APP_CLASSES.add("jme3test.app.state.TestAppStates");
+        ALLOWED_APP_CLASSES.add("jme3test.app.TestBareBonesApp");
+        // Add other legitimate JME test applications as needed
+        // Note: This whitelist should be maintained and updated with only trusted application classes
+    }
 
     @SuppressWarnings("unchecked")
     private void createCanvas(){
@@ -79,6 +91,12 @@ public class AppHarness extends Applet {
         settings.setAudioRenderer(null);
 
         JmeSystem.setLowPermissions(true);
+
+        // Validate the application class against whitelist to prevent unsafe reflection
+        if (!ALLOWED_APP_CLASSES.contains(appClass)) {
+            throw new SecurityException("Application class '" + appClass + "' is not in the allowed whitelist. " +
+                    "Only pre-approved application classes can be loaded for security reasons.");
+        }
 
         try{
             Class clazz = Class.forName(appClass);
