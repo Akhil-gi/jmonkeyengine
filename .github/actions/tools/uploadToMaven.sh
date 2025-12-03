@@ -42,15 +42,13 @@ function uploadAllToMaven {
     cdir="$PWD"
     cd "$path"
     files="`find . \( -name "*.jar" -o -name "*.pom" \) -type f -print`"
-    IFS="
-"
     set -f
-    for art in $files; do
+    IFS="
+" for art in $files; do
         art="${art:2}"
         uploadToMaven "$art" "$art" ${@:2}   
     done
     set +f
-    unset IFS
 
     cd "$cdir"
 } 
