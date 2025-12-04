@@ -60,11 +60,29 @@ public final class AssetConfig {
     private AssetConfig() { }
 
     private static Class acquireClass(String name) {
+        // Validate class name to prevent unsafe reflection attacks
+        if (name == null || name.trim().isEmpty()) {
+            return null;
+        }
+        
+        // Only allow classes from safe packages to prevent arbitrary class loading
+        if (!isAllowedClass(name)) {
+            logger.log(Level.WARNING, "Rejecting unsafe class name: {0}", name);
+            return null;
+        }
+        
         try {
             return Class.forName(name);
         } catch (ClassNotFoundException ex) {
             return null;
         }
+    }
+    
+    private static boolean isAllowedClass(String className) {
+        // Allow only classes from jMonkeyEngine packages and standard Java packages
+        return className.startsWith("com.jme3.") || 
+               className.startsWith("java.") || 
+               className.startsWith("javax.");
     }
 
     @SuppressWarnings("unchecked")
